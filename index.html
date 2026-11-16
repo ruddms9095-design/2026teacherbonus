@@ -192,10 +192,13 @@ a{color:var(--accent)}
         </div>
         <p class="calc">처음이면 새 응답이 시작되고, 이미 제출했다면 저장된 응답을 불러옵니다. 확인번호는 다시 열 때 필요하니 기억해 두세요.</p>
         <div id="id-msg" class="msg" hidden></div>
-        <div class="row" id="id-more" hidden>
+        <div id="id-more" hidden style="display:flex;flex-direction:column;gap:10px">
+        <div class="row">
           <label class="f" for="in-subject">담당 교과(직위)<input id="in-subject" type="text" data-k="subject" placeholder="예: 국어, 보건교사"></label>
           <label class="f" for="in-dutydesc">본인 담당 업무<input id="in-dutydesc" type="text" data-k="dutyDesc" placeholder="예: 교육과정부 기획, 학적" style="width:260px;max-width:100%"></label>
           <label class="f" for="in-months">2026학년도 근무 개월 수<input id="in-months" type="number" min="1" max="12" step="1" data-k="months"></label>
+        </div>
+        <div class="files" data-files="self" data-title="자기실적평가서 파일을 올려 주세요"></div>
         </div>
       </div>
     </section>
@@ -231,7 +234,6 @@ a{color:var(--accent)}
             <li>보건, 진로, 특수, 사서, 상담교사, 3부 부장: 평균 시수 인정 또는 실제 본인 수업 시수</li>
             <li>개인별 연간 수업 시수 = 순수 교과 시수 + 50% 인정 코티칭(자유학기제, 스포츠, 예술강사)</li>
           </ul></details>
-          <label class="memo">근거·비고<input type="text" data-memo="hours" id="memo-hours"></label>
         </div>
         <div class="score" id="sc-hours"><b></b><span>/ 20</span></div>
       </div>
@@ -252,13 +254,13 @@ a{color:var(--accent)}
           <h3>다학년 수업<em>5점</em></h3>
           <p class="calc" id="mg-hint"></p>
           <div data-semchk="mg"></div>
+          <p class="calc">개월 수는 한 학기 수업일 기준 5개월로 계산하며, 15일 이상은 1개월로 간주합니다.</p>
           <p class="calc" id="mg-calc"></p>
           <details class="rule"><summary>기준 보기</summary><ul class="note">
-            <li>기본 4.8점, 다학년 수업 시 1학기당 0.1점 (학기 중 일부만 해당하면 해당 개월 ÷ 5 × 0.1)</li>
+            <li>기본 4.8점, 다학년 수업 시 1학기당 0.1점 (한 학기 4.9점, 두 학기 5점. 일부 기간만 해당하면 해당 개월 ÷ 5 × 0.1)</li>
             <li>자유학기 주제 선택 및 선택 과목 지도는 '다교과'로만 인정하며, 이를 통한 '다학년' 중복 인정은 불가</li>
             <li>순회 교사는 순회 학기를 다학년으로 인정</li>
           </ul></details>
-          <label class="memo">근거·비고<input type="text" data-memo="multiGrade" id="memo-multiGrade"></label>
         </div>
         <div class="score" id="sc-multiGrade"><b></b><span>/ 5</span></div>
       </div>
@@ -268,13 +270,13 @@ a{color:var(--accent)}
           <h3>다교과 수업<em>5점</em></h3>
           <p class="calc" id="ms-hint"></p>
           <div data-semchk="ms"></div>
+          <p class="calc">개월 수는 한 학기 수업일 기준 5개월로 계산하며, 15일 이상은 1개월로 간주합니다.</p>
           <p class="calc" id="ms-calc"></p>
           <details class="rule"><summary>기준 보기</summary><ul class="note">
             <li>기본 4.8점, 다교과 수업 시 1학기당 0.1점 (학기 5개월 기준 월할)</li>
             <li>자유학기제는 직접 수업 시 다교과로 인정(코티칭 인정 불가)</li>
             <li>순회 교사는 순회 학기를 다교과로 인정하며, 다학년·다교과 두 항목 모두 학기당 점수 부여</li>
           </ul></details>
-          <label class="memo">근거·비고<input type="text" data-memo="multiSubj" id="memo-multiSubj"></label>
         </div>
         <div class="score" id="sc-multiSubj"><b></b><span>/ 5</span></div>
       </div>
@@ -548,17 +550,17 @@ const SEMK = {mg:"다학년", ms:"다교과", gate:"아침교문지도", lunch:"
 const ITEMS = [["hours","연간 수업시수",20],["multiGrade","다학년 수업",5],["multiSubj","다교과 수업",5],["homeroom","담임 지도",10],["counsel","상담 실적",10],["gate","교문 지도",5],["lunch","급식 지도",5],["duty","보직·업무곤란도",18],["part","교육활동 참여도",6],["service","복무",6],["train","연수 이수시간",5],["improve","교실수업개선",5]];
 const DUTY_BASE = 16.6, DUTY_MAX = 18, SERVICE_MAX = 6, HOURS_MAX = 20, SEM_MONTHS = 5;
 
-/* 교문·급식은 '한 학기 / 두 학기', 다학년·다교과는 '1학기 / 2학기'로 표시 */
-const semName = (k,n) => (k === "gate" || k === "lunch") ? (n === 1 ? "한 학기" : "두 학기") : n + "학기";
+/* 학기 단위 항목(다학년·다교과·교문·급식)의 체크 칸 이름 */
+const semName = (k,n) => n === 1 ? "한 학기" : "두 학기";
 const newRow = () => ({subj:"",grades:[],kind:KINDS[0]});
 const blank = () => ({name:"",pin:"",subject:"",months:"12",hoursMode:null,hours:"",
   sem1:[newRow()],sem2:[newRow()],
-  mg1:false,mg1m:"5",mg2:false,mg2m:"5",ms1:false,ms1m:"5",ms2:false,ms2m:"5",
+  mg1:false,mg1m:"5",mg2:false,mg2m:"10",ms1:false,ms1m:"5",ms2:false,ms2m:"10",
   hrYes:null,hrGrade:"",hrClass:"",hrMonths:"12",counselRoles:[],counselMonths:"12",
-  gateChief:false,gate1:false,gate1m:"5",gate2:false,gate2m:"5",lunchRole:false,lunch1:false,lunch1m:"5",lunch2:false,lunch2m:"5",
+  gateChief:false,gate1:false,gate1m:"5",gate2:false,gate2m:"10",lunchRole:false,lunch1:false,lunch1m:"5",lunch2:false,lunch2m:"10",
   dutyDesc:"",duty:null,dutyMonths:"12",gigi:false,gigiPts:"0.2",itin:false,itin1:"0.00",itin2:"0.00",part:[],
   absent:"",workDays:"",escorts:"",trainHours:"",trainMissing:false,improve:[],
-  files:{service:[],train:[],improve0:[],improve1:[],improve2:[],improve3:[]},memo:{}});
+  files:{self:[],service:[],train:[],improve0:[],improve1:[],improve2:[],improve3:[]},memo:{}});
 let S = blank();
 let AVG = DEFAULT_AVG_HOURS;
 
@@ -568,9 +570,10 @@ const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null
 const clamp = (n,a,b) => Math.min(b, Math.max(a, n));
 const dutyTier = v => { const t = DUTY.find(o => o[0] === v); return t ? t[2] : null; };
 const trainTier = h => 4.7 + 0.05 * clamp(Math.floor(h / 10), 0, 6);
-const semMonths = (a,k,n) => a[k + n] ? clamp(num(a[k + n + "m"]) || 0, 0, SEM_MONTHS) : 0;
-/* 학기당 0.1점 항목: 학기 5개월 기준 월할 */
-const semBonus = (a,k) => 0.1 * (semMonths(a,k,1) + semMonths(a,k,2)) / SEM_MONTHS;
+/* 학기당 0.1점 항목: '한 학기'(1~5개월) 또는 '두 학기'(6~10개월) 중 하나를 고르고, 학기 5개월 기준으로 월할.
+   두 학기 전체(10개월) = 0.2점, 한 학기 전체(5개월) = 0.1점 */
+const semTotal = (a,k) => a[k + "2"] ? clamp(num(a[k + "2m"]) || 0, 0, 2 * SEM_MONTHS) : a[k + "1"] ? clamp(num(a[k + "1m"]) || 0, 0, SEM_MONTHS) : 0;
+const semBonus = (a,k) => 0.1 * semTotal(a,k) / SEM_MONTHS;
 const workMonths = a => clamp(num(a.months) || 12, 1, 12);
 const itinPts = a => a.itin ? clamp((num(a.itin1) || 0) + (num(a.itin2) || 0), 0, 0.4) : 0;
 const gigiPts = a => a.gigi ? clamp(num(a.gigiPts) || 0, 0, 0.2) : 0;
@@ -619,6 +622,7 @@ function missing(a){
 /* 근거 파일이 없는 가점 항목 안내 (제출은 가능) */
 function fileWarnings(a){
   const w = [], f = a.files || {};
+  if (!(f.self || []).length) w.push("자기실적평가서");
   if (((num(a.workDays) || 0) + (num(a.escorts) || 0)) > 0 && !(f.service || []).length) w.push("복무 가점 근거자료");
   if (!(f.train || []).length) w.push("나이스 연수 이수 내역 캡처본");
   if ((a.improve || []).includes(3) && !(f.improve3 || []).length) w.push("교실수업개선 증빙(관련 공문): " + IMPROVE[3]);
@@ -664,8 +668,8 @@ document.querySelectorAll("[data-check]").forEach(box => {
 document.querySelectorAll("[data-semchk]").forEach(box => {
   const k = box.dataset.semchk;
   box.innerHTML = [1,2].map(n => `<div class="semchk">
-    <label class="opt"><input type="checkbox" data-bool="${k}${n}" id="${k}${n}">${semName(k,n)} ${SEMK[k]} 해당<span class="pt">+0.1</span></label>
-    <label class="f" for="${k}${n}m" id="${k}${n}m-wrap">해당 개월 <select id="${k}${n}m" data-k="${k}${n}m">${[5,4,3,2,1].map(m => `<option value="${m}">${m}개월</option>`).join("")}</select></label>
+    <label class="opt"><input type="checkbox" data-bool="${k}${n}" id="${k}${n}">${semName(k,n)} ${SEMK[k]} 해당<span class="pt">+${n === 1 ? "0.1" : "0.2"}</span></label>
+    <label class="f" for="${k}${n}m" id="${k}${n}m-wrap">해당 개월 <select id="${k}${n}m" data-k="${k}${n}m">${(n === 1 ? [5,4,3,2,1] : [10,9,8,7,6]).map(m => `<option value="${m}">${m}개월</option>`).join("")}</select></label>
   </div>`).join("");
 });
 $("improve-list").innerHTML = IMPROVE.map((label,i) => `<div class="imp">
@@ -709,7 +713,7 @@ function semHint(k, mode){
   }).join(" / ");
 }
 const proTxt = () => workMonths(S) < 12 ? ` × ${workMonths(S)}/12` : "";
-const semCalc = (k, base, noPro) => `${base}${noPro ? "" : proTxt()} + 0.1 × (${semMonths(S,k,1)} + ${semMonths(S,k,2)})개월 ÷ 5 = `;
+const semCalc = (k, base, noPro) => `${base}${noPro ? "" : proTxt()} + 0.1 × ${semTotal(S,k)}개월 ÷ 5 = `;
 function update(){
   const s = score(S, AVG);
   ITEMS.forEach(([id]) => setScore(id, s[id]));
@@ -790,7 +794,11 @@ form.addEventListener("input", e => {
   else if (el.dataset.memo) S.memo = Object.assign({}, S.memo, {[el.dataset.memo]: el.value});
   else if (el.dataset.arr){ const k = el.dataset.arr; S[k] = el.checked ? [...S[k], el.value] : S[k].filter(x => x !== el.value); }
   else if (el.dataset.imp !== undefined){ const i = +el.dataset.imp; S.improve = el.checked ? [...new Set([...S.improve, i])].sort() : S.improve.filter(x => x !== i); }
-  else if (el.dataset.bool) S[el.dataset.bool] = el.checked;
+  else if (el.dataset.bool){
+    S[el.dataset.bool] = el.checked;
+    const m = /^(mg|ms|gate|lunch)([12])$/.exec(el.dataset.bool);   // 한 학기·두 학기는 하나만 선택
+    if (m && el.checked){ const other = m[1] + (m[2] === "1" ? "2" : "1"); S[other] = false; $(other).checked = false; }
+  }
   else if (el.type === "radio"){
     S[el.name] = el.value;
     if (el.name === "hrYes"){   // 담임 아님이면 0개월부터, 담임이면 근무 개월부터 시작
@@ -813,7 +821,7 @@ form.addEventListener("click", e => {
 });
 /* 근거 파일 첨부: Firebase Storage 에 올리고 주소를 응답에 기록
    저장 위치: evidence/<항목 폴더>/<성명>_<월일-시분초>.<확장자>  (항목별 폴더, 파일명은 성명) */
-const FILE_FOLDERS = {service:"복무_가점근거", train:"연수_나이스캡처", improve0:"교실수업개선_공개수업", improve1:"교실수업개선_공개수업참관", improve2:"교실수업개선_연구학교협의회", improve3:"교실수업개선_외부대회지도"};
+const FILE_FOLDERS = {self:"자기실적평가서", service:"복무_가점근거", train:"연수_나이스캡처", improve0:"교실수업개선_공개수업", improve1:"교실수업개선_공개수업참관", improve2:"교실수업개선_연구학교협의회", improve3:"교실수업개선_외부대회지도"};
 let fileSeq = 0;
 function storagePath(slot, original){
   const d = new Date(), p2 = n => String(n).padStart(2, "0");
@@ -867,6 +875,12 @@ async function identify(){
     S.files = Object.assign(blank().files, S.files || {});
     if (!/^0\.\d\d$|^0$/.test(String(S.itin1))) S.itin1 = "0.00"; if (!/^0\.\d\d$|^0$/.test(String(S.itin2))) S.itin2 = "0.00";
     if (S.gigiPts !== "0.1") S.gigiPts = "0.2";
+    ["mg","ms","gate","lunch"].forEach(k => {   // 예전 응답(학기별 따로 체크)을 새 형식으로
+      const m2 = num(S[k + "2m"]) || 0;
+      if (S[k + "2"] && m2 < 6){ if (S[k + "1"]){ S[k + "2m"] = String(clamp((num(S[k + "1m"]) || 0) + m2, 6, 10)); S[k + "1"] = false; } else { S[k + "1"] = true; S[k + "1m"] = String(clamp(m2, 1, 5)); S[k + "2"] = false; S[k + "2m"] = "10"; } }
+      else if (m2 < 6) S[k + "2m"] = "10";
+      if (S[k + "1"] && S[k + "2"]) S[k + "1"] = false;
+    });
     ["sem1","sem2"].forEach(k => { if (!Array.isArray(S[k]) || !S[k].length) S[k] = [newRow()]; });
     S.name = name; S.pin = pin;
     $("id-name").readOnly = true; $("id-pin").readOnly = true; btn.hidden = true; $("id-change").hidden = false;
@@ -885,7 +899,7 @@ $("id-change").addEventListener("click", () => {
 
 /* ---------- 응답 요약·제출 ---------- */
 const semText = (a,k) => semRows(a,k).map(r => `${r.subj.trim()}(${(r.grades || []).join("·")}학년, ${r.kind})`).join("; ") || "없음";
-const semAns = (a,k) => [1,2].map(n => a[k + n] ? `${semName(k,n)} ${semMonths(a,k,n)}개월` : null).filter(Boolean).join(", ") || "해당 없음";
+const semAns = (a,k) => semTotal(a,k) ? `${semName(k, a[k + "2"] ? 2 : 1)} ${semTotal(a,k)}개월` : "해당 없음";
 const fileNames = (a,slot) => ((a.files || {})[slot] || []).map(f => f.name).join(", ");
 function answerPairs(a){
   const d = DUTY.find(o => o[0] === a.duty);
@@ -948,6 +962,7 @@ function renderAdmin(){
       const links = slot => ((a.files || {})[slot] || []).map(f => f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : esc(f.name)).join(", ");
       h += `<tr class="detail"><td colspan="${cols}"><dl class="ans">
         <dt>본인 확인번호</dt><dd>${esc(a.pin)}</dd>
+        <dt>자기실적평가서</dt><dd>${links("self") || "첨부 없음"}</dd>
         <dt>1학기 담당</dt><dd>${esc(semText(a,"sem1"))}</dd><dt>2학기 담당</dt><dd>${esc(semText(a,"sem2"))}</dd>
         ${answerPairs(a).map(([id,v]) => { const it = ITEMS.find(i => i[0] === id), memo = (a.memo || {})[id], fl = (FILE_SLOTS[id] || []).map(links).filter(Boolean).join(", "); return `<dt>${esc(it[1])}</dt><dd>${esc(v)}${memo ? " · 비고: " + esc(memo) : ""}${fl ? " · 첨부: " + fl : ""}</dd>`; }).join("")}
         <dt>처음 제출</dt><dd>${esc(when(d.firstSubmittedAt))}</dd>
